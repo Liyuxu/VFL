@@ -98,6 +98,16 @@ def read_data(data_dir):
 
 
 def calculateLoss(args, preds, y):
+    '''
+
+    Args:
+        args: options
+        preds: [pred1,pred2,...,predn]
+        y: labels
+
+    Returns: CrossEntropyLoss(preds, y)
+
+    '''
     print(">> y:", y)
     pred = sum(preds)
     criterion = torch.nn.CrossEntropyLoss()
@@ -168,15 +178,11 @@ def read_options():
     parser.add_argument('--dataset',
                         help='name of dataset;',
                         type=str,
-                        default='mnist_all_data_0_equal_niid')
+                        default='mnist')
     parser.add_argument('--model',
                         help='name of model;',
                         type=str,
                         default='logistic')
-    parser.add_argument('--wd',
-                        help='weight decay parameter;',
-                        type=float,
-                        default=0.001)
     parser.add_argument('--gpu',
                         action='store_true',
                         default=False,
@@ -184,7 +190,7 @@ def read_options():
     parser.add_argument('--num_round',
                         help='number of rounds to simulate;',
                         type=int,
-                        default=100)
+                        default=500)
     parser.add_argument('--clients_per_round',
                         help='number of clients trained per round;',
                         type=int,
@@ -277,13 +283,14 @@ if __name__ == '__main__':
     len_indices = len(indices)
 
     cv_acc = []
+    
     for i in range(options['num_round']):
         print('---------------------------------------------------------------------------')
         print(f'\n | Global Training Round : {i+1} |')
+        # get the index of samples
         idx_indices = i % len_indices
-        # print(">> indices:", indices[idx_indices])
-
         x, y = trainX[idx_indices], trainY[idx_indices]
+
         preds = []
         selected_clients = select_clients()
 

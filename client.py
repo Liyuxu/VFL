@@ -83,12 +83,8 @@ def test_inference(args, model, testloader):
 
     model.eval()
     loss, total, correct = 0.0, 0.0, 0.0
-
     device = 'cuda' if args['gpu'] else 'cpu'
     criterion = torch.nn.CrossEntropyLoss()
-    # testloader = DataLoader(test_dataset, batch_size=128,
-    #                         shuffle=False)
-
     for batch_idx, (images, labels) in enumerate(testloader):
         images, labels = images.to(device), labels.to(device)
 
@@ -156,7 +152,9 @@ try:
         model = Logistic(in_dim, out_dim)
 
         optimizer = torch.optim.SGD(model.parameters(), lr=lr_rate)
-        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, weight_decay, last_epoch=-1)
+        gamma = 0.9
+        step_size = 64
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size, gamma, last_epoch=-1)
         criterion = torch.nn.CrossEntropyLoss()
 
         cv_acc, cv_loss = [], []
@@ -175,26 +173,35 @@ try:
             model.train()
             optimizer.zero_grad()
             pred = model(x)
+            # send pred to server
             msg = ['MSG_CLIENT_TO_SERVER_PRED', pred]
             send_msg(sock, msg)
+
+            # In order to be able to backward, calculate a loss value
             loss = criterion(pred, y)
             # print(">> origin loss:", loss, loss.grad_fn)
+
+            # receive global loss
             msg = recv_msg(sock, 'MSG_SERVER_TO_CLIENT_GLOSS')
             global_loss = msg[1]
+
+            # global_loss.data -> loss.data
             loss.data = torch.full_like(loss, global_loss.item())
             # print(">>  modified_loss:", loss, loss.grad_fn)
             loss.backward()
             optimizer.step()
+            # learning rate decay
+            scheduler.step()
 
             testaccuracy, testloss = test_inference(options, model, test_loader)
             cv_acc.append(testaccuracy)
             cv_loss.append(testloss)
             print("------ acc =", testaccuracy, "------ loss =", testloss)
-            # print(model.state_dict())
+
             if is_last_round:
                 saveTitle = 'simulationData/client' + str(cid) + 'K' + str(options['clients_per_round']) \
                             + 'T' + str(options['num_round']) + 'B' + str(options['batch_size']) \
-                            + 'lr' + str(options['lr'])
+                            + 'lr' + str(options['lr']) + 'lr_sch' + str(gamma)
                 saveVariableName = 'client' + str(cid) + 'K' + str(options['clients_per_round']) \
                                    + 'T' + str(options['num_round']) + 'B' + str(options['batch_size']) \
                                    + 'lr' + str(options['lr'])

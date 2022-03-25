@@ -264,10 +264,12 @@ if __name__ == '__main__':
     if options['gpu']:
         torch.cuda.set_device(options['gpu'])
     device = 'cuda' if options['gpu'] else 'cpu'
+
     # print config informations
     print("Task Config:\n--n_nodes =", n_nodes, "\n--K =", options['clients_per_round'],
           "\n--BatchSize =", options['batch_size'], "\n--NumIter =", options['num_round'],
           "\n--learning rate =", options['lr'])
+
     # Load Dataset
     test_data = read_data('VFLMNIST/K2_0.pkl')
     batch_size = options['batch_size']
@@ -308,13 +310,12 @@ if __name__ == '__main__':
         for n in selected_clients:
             msg = recv_msg(client_sock_all[n][2], 'MSG_CLIENT_TO_SERVER_PRED')
             pred = msg[1]
-            # print("pred,i:", pred, pred.grad_fn, pred.requires_grad)
             preds.append(copy.deepcopy(pred))
 
         global_loss, acc = calculateLoss(options, preds, y)
         cv_acc.append(acc)
         print(">>>>  acc: ", acc)
-        # print("global_loss:", global_loss, global_loss.requires_grad, global_loss.grad_fn)
+
         msg = ['MSG_SERVER_TO_CLIENT_GLOSS', global_loss]
         for n in selected_clients:
             send_msg(client_sock_all[n][2], msg)
@@ -326,7 +327,6 @@ if __name__ == '__main__':
                        + 'T' + str(options['num_round']) + 'B' + str(options['batch_size']) \
                        + 'lr' + str(options['lr'])
     scipy.io.savemat(saveTitle + '_acc' + '.mat', mdict={saveVariableName + '_acc': np.mat(cv_acc)})
-
     name = ['acc']
     test = pd.DataFrame(columns=name, data=cv_acc)
     test.to_csv(saveTitle + '_acc' + '.csv', encoding='gbk')

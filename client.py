@@ -128,7 +128,6 @@ try:
 
         # Training parameters
         lr_rate = options['lr']  # Initial learning rate
-        weight_decay = 0.99  # Learning rate decay
         batch_size = options['batch_size']  # Data sample for training per comm. round
         num_round = options['num_round']
         out_dim = options['out_dim']
@@ -152,6 +151,7 @@ try:
         model = Logistic(in_dim, out_dim)
 
         optimizer = torch.optim.SGD(model.parameters(), lr=lr_rate)
+        # Learning rate decay , lr = lr * gamma
         gamma = 0.9
         step_size = 64
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size, gamma, last_epoch=-1)

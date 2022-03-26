@@ -190,7 +190,7 @@ def read_options():
     parser.add_argument('--num_round',
                         help='number of rounds to simulate;',
                         type=int,
-                        default=50)
+                        default=512)
     parser.add_argument('--clients_per_round',
                         help='number of clients trained per round;',
                         type=int,

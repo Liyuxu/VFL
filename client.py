@@ -125,6 +125,7 @@ try:
         print('Received message from server:', msg)
         options = msg[1]  # 一系列工作参数
         cid = msg[2]
+        n_nodes = msg[3]
 
         # Training parameters
         lr_rate = options['lr']  # Initial learning rate
@@ -133,7 +134,7 @@ try:
         out_dim = options['out_dim']
 
         # Import the data set
-        file_name = './VFLMNIST/K2_' + str(cid) + '.pkl'
+        file_name = './VFLMNIST/K' + str(n_nodes) + '_' + str(cid) + '.pkl'
         train_data = read_data(file_name)
 
         print('data read successfully')
@@ -152,8 +153,8 @@ try:
 
         optimizer = torch.optim.SGD(model.parameters(), lr=lr_rate)
         # Learning rate decay , lr = lr * gamma
-        gamma = 0.9
-        step_size = 64
+        gamma = 0.8
+        step_size = 50
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size, gamma, last_epoch=-1)
         criterion = torch.nn.CrossEntropyLoss()
 
@@ -166,6 +167,16 @@ try:
             is_last_round = msg[2]
             round_i = msg[3]
             print(">>  Round ", round_i)
+
+            if is_last_round:
+                saveTitle = './simulationData/client' + str(cid) + '_K' + str(options['clients_per_round']) \
+                            + 'T' + str(options['num_round']) + 'B' + str(options['batch_size'])
+                saveVariableName = 'client' + str(cid) + 'K' + str(options['clients_per_round']) \
+                                   + 'T' + str(options['num_round']) + 'B' + str(options['batch_size'])
+                scipy.io.savemat(saveTitle + '_acc' + '.mat', mdict={saveVariableName + '_acc': cv_acc})
+                scipy.io.savemat(saveTitle + '_loss' + '.mat', mdict={saveVariableName + '_loss': cv_loss})
+                break
+
             x, y = trainX[indices], trainY[indices]
             print("idx: ", indices, " y:", y)
             print('Make dataloader successfully')
@@ -198,14 +209,6 @@ try:
             cv_loss.append(testloss)
             print("------ acc =", testaccuracy, "------ loss =", testloss)
 
-            if is_last_round:
-                saveTitle = './simulationData/client' + str(cid) + 'K' + str(options['clients_per_round']) \
-                            + 'T' + str(options['num_round']) + 'B' + str(options['batch_size'])
-                saveVariableName = 'client' + str(cid) + 'K' + str(options['clients_per_round']) \
-                                   + 'T' + str(options['num_round']) + 'B' + str(options['batch_size'])
-                scipy.io.savemat(saveTitle + '_acc' + '.mat', mdict={saveVariableName + '_acc': cv_acc})
-                scipy.io.savemat(saveTitle + '_loss' + '.mat', mdict={saveVariableName + '_loss': cv_loss})
-                break
 
 except (struct.error, socket.error):
     print('Server has stopped')

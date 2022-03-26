@@ -190,7 +190,7 @@ def read_options():
     parser.add_argument('--num_round',
                         help='number of rounds to simulate;',
                         type=int,
-                        default=512)
+                        default=50)
     parser.add_argument('--clients_per_round',
                         help='number of clients trained per round;',
                         type=int,
@@ -243,7 +243,7 @@ if __name__ == '__main__':
 
     options = read_options()
 
-    n_nodes = 2
+    n_nodes = 4
     aggregation_count = 0
     # Establish connections to each client, up to n_nodes clients, setup for clients
     while len(client_sock_all) < n_nodes:
@@ -255,7 +255,7 @@ if __name__ == '__main__':
         client_sock_all.append([ip, port, client_sock])
 
     for n in range(0, n_nodes):
-        msg = ['MSG_INIT_SERVER_TO_CLIENT', options, n]
+        msg = ['MSG_INIT_SERVER_TO_CLIENT', options, n, n_nodes]
         send_msg(client_sock_all[n][2], msg)
 
     print('All clients connected')
@@ -300,10 +300,14 @@ if __name__ == '__main__':
         aggregation_count += 1
         if aggregation_count == options['num_round']:
             is_last_round = True
-
-        msg = ['MSG_SERVER_TO_CLIENT_SAMPLER', idx_indices, is_last_round, aggregation_count]
-        for n in selected_clients:
-            send_msg(client_sock_all[n][2], msg)
+            msg = ['MSG_SERVER_TO_CLIENT_SAMPLER', idx_indices, is_last_round, aggregation_count]
+            for n in range(len(client_sock_all)):
+                send_msg(client_sock_all[n][2], msg)
+            break
+        else:
+            msg = ['MSG_SERVER_TO_CLIENT_SAMPLER', idx_indices, is_last_round, aggregation_count]
+            for n in selected_clients:
+                send_msg(client_sock_all[n][2], msg)
 
         print('Waiting for local iteration at client')
 

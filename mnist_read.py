@@ -37,18 +37,23 @@ for i in range(0, row):
         data[i][j] = data[i][j] / 255
 # Make dataloader successfully
 
-num_clients = 2
+num_clients = 4
 batch = 784 // num_clients
 
 # divide dataset
 div_data = []
+print("type(data), data.shape[1]:", type(data), data.shape[1])
+col_rand_array = np.arange(data.shape[1])
+np.random.shuffle(col_rand_array)
+
 for i in range(num_clients):
     if i == num_clients-1:
-        div_data.append(data[:, batch * i:].tolist())
+        div_data.append(data[:, col_rand_array[batch * i:]].tolist())
         print(">>>> div_data{} shape:".format(i), np.array(div_data[i]).shape)
         break
-    div_data.append(data[:, batch * i:batch * (i+1)].tolist())
+    div_data.append(data[:, col_rand_array[batch * i:batch * (i+1)]].tolist())
     print(">>>> div_data{} shape:".format(i), np.array(div_data[i]).shape)
+
 
 # list to tensor
 div_data_tensor, data_label = [], []

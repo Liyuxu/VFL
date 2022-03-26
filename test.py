@@ -12,7 +12,6 @@ from torch.utils.data import Dataset
 from PIL import Image
 
 
-
 def read_data(data_dir):
     """Parses data in given train and test data directories
 
@@ -107,11 +106,15 @@ train_loader = torch.utils.data.DataLoader(dataset=train_data,
 for idx, (x, y) in enumerate(train_loader):
     if idx in indices:
         print(idx, x, y)
-        print(train_loader[idx])
 
-# sampler = list(range(600))
-# import random
-# random.shuffle(sampler)
-# print(sampler)
-# print(sampler.index(0))
+import numpy as np
+
+array = np.arange(24).reshape((4, 6))
+print("array", array)
+print("array.shape[1]", array.shape[1])
+col_rand_array = np.arange(array.shape[1])
+np.random.shuffle(col_rand_array)
+col_rand = array[:, col_rand_array[0:2]]
+print(col_rand)
+
 print('Make dataloader successfully')

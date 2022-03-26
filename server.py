@@ -114,7 +114,6 @@ def calculateLoss(args, preds, y):
     batch_loss = criterion(pred, y)
 
     # Prediction
-
     for i in range(len(preds)):
         correct = 0
         _, pred_labels = torch.max(preds[i], 1)
@@ -122,6 +121,7 @@ def calculateLoss(args, preds, y):
         correct += torch.sum(torch.eq(pred_labels, y)).item()
         acc = correct / len(y)
         print(">>>> ", i, " acc:", acc)
+
     correct = 0
     _, pred_labels = torch.max(pred, 1)
     pred_labels = pred_labels.view(-1)
@@ -190,7 +190,7 @@ def read_options():
     parser.add_argument('--num_round',
                         help='number of rounds to simulate;',
                         type=int,
-                        default=500)
+                        default=50)
     parser.add_argument('--clients_per_round',
                         help='number of clients trained per round;',
                         type=int,
@@ -271,7 +271,7 @@ if __name__ == '__main__':
           "\n--learning rate =", options['lr'])
 
     # Load Dataset
-    test_data = read_data('VFLMNIST/K2_0.pkl')
+    test_data = read_data('VFLMNIST/K4_0.pkl')
     batch_size = options['batch_size']
     test_loader = DataLoader(dataset=test_data,
                              batch_size=options['batch_size'],
@@ -320,14 +320,13 @@ if __name__ == '__main__':
         for n in selected_clients:
             send_msg(client_sock_all[n][2], msg)
 
-    saveTitle = 'simulationData/server_' + 'K' + str(options['clients_per_round']) \
-                + 'T' + str(options['num_round']) + 'B' + str(options['batch_size']) \
-                + 'lr' + str(options['lr'])
+    saveTitle = './simulationData/server_' + 'K' + str(options['clients_per_round']) \
+                + 'T' + str(options['num_round']) + 'B' + str(options['batch_size'])
     saveVariableName = 'server_' + 'K' + str(options['clients_per_round']) \
-                       + 'T' + str(options['num_round']) + 'B' + str(options['batch_size']) \
-                       + 'lr' + str(options['lr'])
-    scipy.io.savemat(saveTitle + '_acc' + '.mat', mdict={saveVariableName + '_acc': np.mat(cv_acc)})
-    name = ['acc']
-    test = pd.DataFrame(columns=name, data=cv_acc)
-    test.to_csv(saveTitle + '_acc' + '.csv', encoding='gbk')
+                       + 'T' + str(options['num_round']) + 'B' + str(options['batch_size'])
+    scipy.io.savemat(saveTitle + '_acc' + '.mat', mdict={saveVariableName + '_acc': cv_acc})
+    # save csv
+    # name = ['acc']
+    # test = pd.DataFrame(columns=name, data=cv_acc)
+    # test.to_csv(saveTitle + '_acc' + '.csv', encoding='gbk')
 

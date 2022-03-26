@@ -199,18 +199,16 @@ try:
             print("------ acc =", testaccuracy, "------ loss =", testloss)
 
             if is_last_round:
-                saveTitle = 'simulationData/client' + str(cid) + 'K' + str(options['clients_per_round']) \
-                            + 'T' + str(options['num_round']) + 'B' + str(options['batch_size']) \
-                            + 'lr' + str(options['lr']) + 'lr_sch' + str(gamma)
+                saveTitle = './simulationData/client' + str(cid) + 'K' + str(options['clients_per_round']) \
+                            + 'T' + str(options['num_round']) + 'B' + str(options['batch_size'])
                 saveVariableName = 'client' + str(cid) + 'K' + str(options['clients_per_round']) \
-                                   + 'T' + str(options['num_round']) + 'B' + str(options['batch_size']) \
-                                   + 'lr' + str(options['lr'])
-                scipy.io.savemat(saveTitle + '_acc' + '.mat', mdict={saveVariableName + '_acc': np.mat(cv_acc)})
-                scipy.io.savemat(saveTitle + '_loss' + '.mat', mdict={saveVariableName + '_loss': np.mat(cv_loss)})
-                import pandas as pd
-                name = ['acc']
-                test = pd.DataFrame(columns=name, data=cv_acc)
-                test.to_csv(saveTitle + '_acc' + '.csv', encoding='gbk')
+                                   + 'T' + str(options['num_round']) + 'B' + str(options['batch_size'])
+                scipy.io.savemat(saveTitle + '_acc' + '.mat', mdict={saveVariableName + '_acc': cv_acc})
+                scipy.io.savemat(saveTitle + '_loss' + '.mat', mdict={saveVariableName + '_loss': cv_loss})
+                # import pandas as pd
+                # name = ['acc']
+                # test = pd.DataFrame(columns=name, data=cv_acc)
+                # test.to_csv(saveTitle + '_acc' + '.csv', encoding='gbk')
                 break
 
 except (struct.error, socket.error):

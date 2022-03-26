@@ -205,10 +205,6 @@ try:
                                    + 'T' + str(options['num_round']) + 'B' + str(options['batch_size'])
                 scipy.io.savemat(saveTitle + '_acc' + '.mat', mdict={saveVariableName + '_acc': cv_acc})
                 scipy.io.savemat(saveTitle + '_loss' + '.mat', mdict={saveVariableName + '_loss': cv_loss})
-                # import pandas as pd
-                # name = ['acc']
-                # test = pd.DataFrame(columns=name, data=cv_acc)
-                # test.to_csv(saveTitle + '_acc' + '.csv', encoding='gbk')
                 break
 
 except (struct.error, socket.error):

@@ -11,7 +11,7 @@ import torch.nn.functional as F
 import importlib
 from torch.utils.data import DataLoader, Dataset
 import scipy.io
-from config import OPTIMIZERS, DATASETS, MODEL_PARAMS, TRAINERS, BATCH_LIST, SERVER_ADDR, SERVER_PORT
+from config import SERVER_ADDR, SERVER_PORT
 import importlib
 import socket
 from utils import recv_msg, send_msg
@@ -325,8 +325,5 @@ if __name__ == '__main__':
     saveVariableName = 'server_' + 'K' + str(options['clients_per_round']) \
                        + 'T' + str(options['num_round']) + 'B' + str(options['batch_size'])
     scipy.io.savemat(saveTitle + '_acc' + '.mat', mdict={saveVariableName + '_acc': cv_acc})
-    # save csv
-    # name = ['acc']
-    # test = pd.DataFrame(columns=name, data=cv_acc)
-    # test.to_csv(saveTitle + '_acc' + '.csv', encoding='gbk')
+
 

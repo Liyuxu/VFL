@@ -1,5 +1,6 @@
-import pickle, struct, socket
-import sys
+import pickle
+import socket
+import struct
 
 
 def send_msg(sock, msg):

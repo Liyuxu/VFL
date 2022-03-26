@@ -32,17 +32,15 @@ data, labels = load_mnist('./MNIST/')
 data = data.astype(float)
 print(">> data shape, label shape:", data.shape, labels.shape, type(labels))
 row, line = data.shape
-# 把矩阵转化为元组列表
-
 for i in range(0, row):
     for j in range(0, line):
         data[i][j] = data[i][j] / 255
-
-
-# print(labels[0:20], type(labels))
+# Make dataloader successfully
 
 num_clients = 2
 batch = 784 // num_clients
+
+# divide dataset
 div_data = []
 for i in range(num_clients):
     if i == num_clients-1:
@@ -52,6 +50,7 @@ for i in range(num_clients):
     div_data.append(data[:, batch * i:batch * (i+1)].tolist())
     print(">>>> div_data{} shape:".format(i), np.array(div_data[i]).shape)
 
+# list to tensor
 div_data_tensor, data_label = [], []
 for i in range(num_clients):
     div_data_tensor.append(torch.Tensor(div_data[i]))

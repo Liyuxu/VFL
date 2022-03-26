@@ -10,15 +10,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 from PIL import Image
-import time
-import scipy.io
-import torchvision.transforms as transforms
-from config import SERVER_ADDR, SERVER_PORT
-from utils import recv_msg, send_msg
-import socket
-import struct
-from torchvision import transforms
-import math
+
 
 
 def read_data(data_dir):

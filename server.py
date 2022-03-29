@@ -1,23 +1,21 @@
-import argparse
-import os
+from config import read_options
+import sys
 import copy
-import pandas as pd
-import time
 import pickle
 import numpy as np
 import torch
 from torch import nn
-import torch.nn.functional as F
-import importlib
 from torch.utils.data import DataLoader, Dataset
 import scipy.io
 from config import SERVER_ADDR, SERVER_PORT
-import importlib
 import socket
 from utils import recv_msg, send_msg
 from torchvision import transforms
-import math
 from PIL import Image
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import matplotlib.pyplot as plt
+import tkinter as tk
+import threading
 
 
 class MiniDataset(Dataset):
@@ -126,7 +124,7 @@ def calculateLoss(args, preds, y):
     _, pred_labels = torch.max(pred, 1)
     pred_labels = pred_labels.view(-1)
     correct += torch.sum(torch.eq(pred_labels, y)).item()
-    acc = correct/len(y)
+    acc = correct / len(y)
     # print("batch_loss:", batch_loss, batch_loss.grad_fn)
     return batch_loss, acc
 
@@ -161,6 +159,7 @@ def test_inference(args, model, testloader):
     loss = loss / total
     return accuracy, loss
 
+
 # Model for MQTT_IOT_IDS dataset
 class Logistic(nn.Module):
     def __init__(self, in_dim, out_dim):
@@ -170,49 +169,6 @@ class Logistic(nn.Module):
     def forward(self, x):
         logit = self.layer(x)
         return logit
-
-
-def read_options():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--dataset',
-                        help='name of dataset;',
-                        type=str,
-                        default='mnist')
-    parser.add_argument('--model',
-                        help='name of model;',
-                        type=str,
-                        default='logistic')
-    parser.add_argument('--gpu',
-                        action='store_true',
-                        default=False,
-                        help='use gpu (default: False)')
-    parser.add_argument('--num_round',
-                        help='number of rounds to simulate;',
-                        type=int,
-                        default=50)
-    parser.add_argument('--clients_per_round',
-                        help='number of clients trained per round;',
-                        type=int,
-                        default=2)
-    parser.add_argument('--batch_size',
-                        help='batch size when clients train on data;',
-                        type=int,
-                        default=5000)
-    parser.add_argument('--lr',
-                        help='learning rate for inner solver;',
-                        type=float,
-                        default=0.3)
-    parser.add_argument('--out_dim',
-                        help='output dimension',
-                        type=int,
-                        default=10)
-
-    parsed = parser.parse_args()
-    options = parsed.__dict__
-    options['gpu'] = options['gpu'] and torch.cuda.is_available()
-
-    return options
 
 
 def select_clients():
@@ -234,6 +190,132 @@ def divideSampler(num_samples, batch_size):
     return sampler
 
 
+import os
+
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
+global win
+global tempGraphLabel
+runFlag = True
+tempData = []
+cv_acc = []
+numRound = 0
+
+'''
+图表类，定义时参数root为父控件
+'''
+
+
+class tempGraph():
+    def __init__(self, root):
+        self.root = root  # 主窗体
+        self.canvas = tk.Canvas()  # 创建一块显示图形的画布
+        self.figure = self.create_matplotlib()  # 返回matplotlib所画图形的figure对象
+        self.showGraphIn(self.figure)  # 将figure显示在tkinter窗体上面
+
+    '''生成fig'''
+
+    def create_matplotlib(self):
+        # 创建绘图对象f
+        f = plt.figure(num=2, figsize=(16, 8), dpi=100, edgecolor='green', frameon=True)
+        # 创建一副子图
+        self.fig11 = plt.subplot(1, 1, 1)
+        self.line11, = self.fig11.plot([], [])
+
+        def setLabel(fig, title, titleColor="red"):
+            fig.set_title(title + "Accuracy", color=titleColor)  # 设置标题
+            fig.set_xlabel('round')  # 设置x轴标签
+            fig.set_ylabel("acc")  # 设置y轴标签
+            fig.axis([0, numRound, 0, 1])  # 设置x,y坐标范围
+
+        setLabel(self.fig11, "globalModel")
+        # fig1.set_yticks([-1, -1 / 2, 0, 1 / 2, 1])  # 设置坐标轴刻度
+        # f.tight_layout()  # 自动紧凑布局
+        return f
+
+    '''把fig显示到tkinter'''
+
+    def showGraphIn(self, figure):
+        # 把绘制的图形显示到tkinter窗口上
+        self.canvas = FigureCanvasTkAgg(figure, self.root)
+        self.canvas.draw()  # 以前的版本使用show()方法，matplotlib 2.2之后不再推荐show（）用draw代替，但是用show不会报错，会显示警告
+        self.canvas.get_tk_widget().pack(side=tk.TOP)  # , fill=tk.BOTH, expand=1
+
+        # 把matplotlib绘制图形的导航工具栏显示到tkinter窗口上
+        toolbar = NavigationToolbar2Tk(self.canvas,
+                                       self.root)  # matplotlib 2.2版本之后推荐使用NavigationToolbar2Tk，若使用NavigationToolbar2TkAgg会警告
+        toolbar.update()
+        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+    '''更新fig'''
+
+    def updateMeltGraph(self, meltData):
+        x = [i for i in range(len(meltData))]
+        self.line11.set_xdata(x)  # x轴也必须更新
+        self.line11.set_ydata(meltData)  # 更新y轴数据
+        #  更新x数据，但未更新绘图范围。当我把新数据放在绘图上时，它完全超出了范围。解决办法是增加：
+        self.fig11.relim()
+        self.fig11.autoscale_view()
+        plt.draw()
+        # self.canvas.draw_idle()
+
+
+'''
+更新窗口
+'''
+
+
+def updateWindow():
+    global win
+    global tempGraphLabel, tempData, runFlag
+    if runFlag:
+        tempGraphLabel.updateMeltGraph(cv_acc)
+    win.after(200, updateWindow)  # 1000ms更新画布
+
+
+'''
+关闭窗口触发函数，关闭S7连接，置位flag
+'''
+
+
+def closeWindow():
+    global runFlag
+    runFlag = False
+    sys.exit()
+
+
+'''
+创建控件
+'''
+
+
+def createGUI():
+    global win
+    win = tk.Tk()
+    displayWidth = win.winfo_screenwidth()  # 获取屏幕宽度
+    displayHeight = win.winfo_screenheight()
+    winWidth, winHeight = displayWidth, displayHeight - 70
+    winX, winY = -8, 0
+    # winX, winY = int((displayWidth - winWidth) /
+    #                  2), int((displayHeight - winHeight - 70) / 2)
+    win.title("title1")
+    win.geometry(
+        '%dx%d-%d+%d' %
+        (winWidth,
+         winHeight,
+         winX, winY))  # %dx%d宽度x 高度+横向偏移量(距左边)+纵向偏移量(距上边)
+    # win.resizable(0, 0) # 不使能最大化
+    win.protocol("WM_DELETE_WINDOW", closeWindow)
+    # win.iconbitmap(r'resource/images/motor.ico')  # 窗口图标
+    graphFrame = tk.Frame(win)  # 创建图表控件
+    graphFrame.place(x=0, y=0)
+    global tempGraphLabel
+    tempGraphLabel = tempGraph(graphFrame)
+
+    updateWindow()  # 更新画布
+    win.mainloop()
+
+
 if __name__ == '__main__':
 
     listening_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -243,7 +325,7 @@ if __name__ == '__main__':
 
     options = read_options()
 
-    n_nodes = 4
+    n_nodes = 2
     aggregation_count = 0
     # Establish connections to each client, up to n_nodes clients, setup for clients
     while len(client_sock_all) < n_nodes:
@@ -284,11 +366,16 @@ if __name__ == '__main__':
     indices = divideSampler(60000, batch_size)
     len_indices = len(indices)
 
-    cv_acc = []
-    
-    for i in range(options['num_round']):
+    # global cv_acc
+
+    # 添加子线程用于实时展示精度
+    # t1 = threading.Thread(target=createGUI)
+    # t1.start()
+    numRound = options['num_round']
+    cv_loss = []
+    for i in range(options['num_round']+1):
         print('---------------------------------------------------------------------------')
-        print(f'\n | Global Training Round : {i+1} |')
+        print(f'\n | Global Training Round : {i} |')
         # get the index of samples
         idx_indices = i % len_indices
         x, y = trainX[idx_indices], trainY[idx_indices]
@@ -297,7 +384,6 @@ if __name__ == '__main__':
         selected_clients = select_clients()
 
         is_last_round = False
-        aggregation_count += 1
         if aggregation_count == options['num_round']:
             is_last_round = True
             msg = ['MSG_SERVER_TO_CLIENT_SAMPLER', idx_indices, is_last_round, aggregation_count]
@@ -309,6 +395,7 @@ if __name__ == '__main__':
             for n in selected_clients:
                 send_msg(client_sock_all[n][2], msg)
 
+        aggregation_count += 1
         print('Waiting for local iteration at client')
 
         for n in selected_clients:
@@ -318,6 +405,7 @@ if __name__ == '__main__':
 
         global_loss, acc = calculateLoss(options, preds, y)
         cv_acc.append(acc)
+        cv_loss.append(global_loss.item())
         print(">>>>  acc: ", acc)
 
         msg = ['MSG_SERVER_TO_CLIENT_GLOSS', global_loss]
@@ -329,5 +417,24 @@ if __name__ == '__main__':
     saveVariableName = 'server_' + 'K' + str(options['clients_per_round']) \
                        + 'T' + str(options['num_round']) + 'B' + str(options['batch_size'])
     scipy.io.savemat(saveTitle + '_acc' + '.mat', mdict={saveVariableName + '_acc': cv_acc})
+    scipy.io.savemat(saveTitle + '_loss' + '.mat', mdict={saveVariableName + '_loss': cv_loss})
 
+    # Save tracked information
+    # plot
+    plotTitle = './jpg/server_' + 'K' + str(options['clients_per_round']) \
+                + 'T' + str(options['num_round']) + 'B' + str(options['batch_size'])
+    plt.figure(1)
+    plt.plot(cv_acc)
+    plt.title("Global Accuracy")
+    plt.xlabel("round")
+    plt.ylabel("accuracy")
+    plt.savefig(plotTitle + '_acc.jpg')
+    plt.close()
 
+    plt.figure(2)
+    plt.plot(cv_loss)
+    plt.title("Global Loss")
+    plt.xlabel("round")
+    plt.ylabel("loss")
+    plt.savefig(plotTitle + '_loss.jpg')
+    plt.close()

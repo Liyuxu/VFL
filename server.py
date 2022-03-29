@@ -205,7 +205,6 @@ numRound = 0
 图表类，定义时参数root为父控件
 '''
 
-
 class tempGraph():
     def __init__(self, root):
         self.root = root  # 主窗体
@@ -371,6 +370,7 @@ if __name__ == '__main__':
     # 添加子线程用于实时展示精度
     # t1 = threading.Thread(target=createGUI)
     # t1.start()
+
     numRound = options['num_round']
     cv_loss = []
     for i in range(options['num_round']+1):

@@ -118,3 +118,4 @@ col_rand = array[:, col_rand_array[0:2]]
 print(col_rand)
 
 print('Make dataloader successfully')
+

@@ -107,18 +107,21 @@ def calculateLoss(args, preds, y):
 
     '''
     print(">> y:", y)
-    pred = sum(preds)
+    pred = sum(preds)/len(preds)
     criterion = torch.nn.CrossEntropyLoss()
     batch_loss = criterion(pred, y)
 
     # Prediction
+
     for i in range(len(preds)):
+        if isinstance(preds[i], int):
+            continue
         correct = 0
         _, pred_labels = torch.max(preds[i], 1)
         pred_labels = pred_labels.view(-1)
         correct += torch.sum(torch.eq(pred_labels, y)).item()
         acc = correct / len(y)
-        print(">>>> ", i, " acc:", acc)
+        print(">>>> client_", i, " acc:", acc)
 
     correct = 0
     _, pred_labels = torch.max(pred, 1)
@@ -324,7 +327,7 @@ if __name__ == '__main__':
 
     options = read_options()
 
-    n_nodes = 2
+    n_nodes = 4
     aggregation_count = 0
     # Establish connections to each client, up to n_nodes clients, setup for clients
     while len(client_sock_all) < n_nodes:
@@ -373,14 +376,14 @@ if __name__ == '__main__':
 
     numRound = options['num_round']
     cv_loss = []
+    preds = [[0 for i in range(n_nodes)] for j in range(len_indices)]
     for i in range(options['num_round']+1):
         print('---------------------------------------------------------------------------')
         print(f'\n | Global Training Round : {i} |')
         # get the index of samples
         idx_indices = i % len_indices
         x, y = trainX[idx_indices], trainY[idx_indices]
-
-        preds = []
+        # preds = []
         selected_clients = select_clients()
 
         is_last_round = False
@@ -401,9 +404,9 @@ if __name__ == '__main__':
         for n in selected_clients:
             msg = recv_msg(client_sock_all[n][2], 'MSG_CLIENT_TO_SERVER_PRED')
             pred = msg[1]
-            preds.append(copy.deepcopy(pred))
+            preds[idx_indices][n] = copy.deepcopy(pred)
 
-        global_loss, acc = calculateLoss(options, preds, y)
+        global_loss, acc = calculateLoss(options, preds[idx_indices], y)
         cv_acc.append(acc)
         cv_loss.append(global_loss.item())
         print(">>>>  acc: ", acc)

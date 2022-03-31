@@ -123,7 +123,7 @@ try:
     while True:
         msg = recv_msg(sock, 'MSG_INIT_SERVER_TO_CLIENT')
         print('Received message from server:', msg)
-        options = msg[1]  # 一系列工作参数
+        options = msg[1]
         cid = msg[2]
         n_nodes = msg[3]
 
@@ -153,8 +153,8 @@ try:
 
         optimizer = torch.optim.SGD(model.parameters(), lr=lr_rate)
         # Learning rate decay , lr = lr * gamma
-        gamma = 0.8
-        step_size = 50
+        gamma = 0.9
+        step_size = 100
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size, gamma, last_epoch=-1)
         criterion = torch.nn.CrossEntropyLoss()
 
@@ -167,7 +167,7 @@ try:
             is_last_round = msg[2]
             round_i = msg[3]
             print(">>  Round ", round_i)
-
+            print(">>   lr  =", optimizer.param_groups[0]['lr'])
             if is_last_round:
                 saveTitle = './simulationData/client' + str(cid) + '_K' + str(options['clients_per_round']) \
                             + 'T' + str(options['num_round']) + 'B' + str(options['batch_size'])
@@ -180,6 +180,7 @@ try:
             x, y = trainX[indices], trainY[indices]
             print("idx: ", indices, " y:", y)
             print('Make dataloader successfully')
+
             # calculate predication
             model.train()
             optimizer.zero_grad()
@@ -188,17 +189,15 @@ try:
             msg = ['MSG_CLIENT_TO_SERVER_PRED', pred]
             send_msg(sock, msg)
 
-            # In order to be able to backward, calculate a loss value
+            # for backward
+            # calculate a loss value casually
             loss = criterion(pred, y)
-            # print(">> origin loss:", loss, loss.grad_fn)
-
             # receive global loss
             msg = recv_msg(sock, 'MSG_SERVER_TO_CLIENT_GLOSS')
             global_loss = msg[1]
-
             # global_loss.data -> loss.data
             loss.data = torch.full_like(loss, global_loss.item())
-            # print(">>  modified_loss:", loss, loss.grad_fn)
+
             loss.backward()
             optimizer.step()
             # learning rate decay
@@ -209,7 +208,7 @@ try:
             cv_loss.append(testloss)
             print("------ acc =", testaccuracy, "------ loss =", testloss)
 
-
 except (struct.error, socket.error):
     print('Server has stopped')
     pass
+

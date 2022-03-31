@@ -320,7 +320,7 @@ if __name__ == '__main__':
 
     options = read_options()
 
-    n_nodes = 4
+    n_nodes = 2
     aggregation_count = 0
     # Establish connections to each client, up to n_nodes clients, setup for clients
     while len(client_sock_all) < n_nodes:

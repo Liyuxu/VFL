@@ -106,7 +106,7 @@ def calculateLoss(args, preds, y):
     Returns: CrossEntropyLoss(preds, y)
 
     '''
-    print(">> y:", y)
+
     pred = sum(preds)/len(preds)
     criterion = torch.nn.CrossEntropyLoss()
     batch_loss = criterion(pred, y)
@@ -141,8 +141,6 @@ def test_inference(args, model, testloader):
 
     device = 'cuda' if args['gpu'] else 'cpu'
     criterion = torch.nn.CrossEntropyLoss()
-    # testloader = DataLoader(test_dataset, batch_size=128,
-    #                         shuffle=False)
 
     for batch_idx, (images, labels) in enumerate(testloader):
         images, labels = images.to(device), labels.to(device)
@@ -231,8 +229,6 @@ class tempGraph():
             fig.axis([0, numRound, 0, 1])  # 设置x,y坐标范围
 
         setLabel(self.fig11, "globalModel")
-        # fig1.set_yticks([-1, -1 / 2, 0, 1 / 2, 1])  # 设置坐标轴刻度
-        # f.tight_layout()  # 自动紧凑布局
         return f
 
     '''把fig显示到tkinter'''
@@ -245,7 +241,7 @@ class tempGraph():
 
         # 把matplotlib绘制图形的导航工具栏显示到tkinter窗口上
         toolbar = NavigationToolbar2Tk(self.canvas,
-                                       self.root)  # matplotlib 2.2版本之后推荐使用NavigationToolbar2Tk，若使用NavigationToolbar2TkAgg会警告
+                                       self.root)
         toolbar.update()
         self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
@@ -259,7 +255,6 @@ class tempGraph():
         self.fig11.relim()
         self.fig11.autoscale_view()
         plt.draw()
-        # self.canvas.draw_idle()
 
 
 '''
@@ -298,17 +293,15 @@ def createGUI():
     displayHeight = win.winfo_screenheight()
     winWidth, winHeight = displayWidth, displayHeight - 70
     winX, winY = -8, 0
-    # winX, winY = int((displayWidth - winWidth) /
-    #                  2), int((displayHeight - winHeight - 70) / 2)
     win.title("title1")
     win.geometry(
         '%dx%d-%d+%d' %
         (winWidth,
          winHeight,
          winX, winY))  # %dx%d宽度x 高度+横向偏移量(距左边)+纵向偏移量(距上边)
-    # win.resizable(0, 0) # 不使能最大化
+
     win.protocol("WM_DELETE_WINDOW", closeWindow)
-    # win.iconbitmap(r'resource/images/motor.ico')  # 窗口图标
+
     graphFrame = tk.Frame(win)  # 创建图表控件
     graphFrame.place(x=0, y=0)
     global tempGraphLabel

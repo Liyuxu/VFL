@@ -191,126 +191,6 @@ def divideSampler(num_samples, batch_size):
     return sampler
 
 
-import os
-
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-
-global win
-global tempGraphLabel
-runFlag = True
-tempData = []
-cv_acc = []
-numRound = 0
-
-'''
-图表类，定义时参数root为父控件
-'''
-
-class tempGraph():
-    def __init__(self, root):
-        self.root = root  # 主窗体
-        self.canvas = tk.Canvas()  # 创建一块显示图形的画布
-        self.figure = self.create_matplotlib()  # 返回matplotlib所画图形的figure对象
-        self.showGraphIn(self.figure)  # 将figure显示在tkinter窗体上面
-
-    '''生成fig'''
-
-    def create_matplotlib(self):
-        # 创建绘图对象f
-        f = plt.figure(num=2, figsize=(16, 8), dpi=100, edgecolor='green', frameon=True)
-        # 创建一副子图
-        self.fig11 = plt.subplot(1, 1, 1)
-        self.line11, = self.fig11.plot([], [])
-
-        def setLabel(fig, title, titleColor="red"):
-            fig.set_title(title + "Accuracy", color=titleColor)  # 设置标题
-            fig.set_xlabel('round')  # 设置x轴标签
-            fig.set_ylabel("acc")  # 设置y轴标签
-            fig.axis([0, numRound, 0, 1])  # 设置x,y坐标范围
-
-        setLabel(self.fig11, "globalModel")
-        return f
-
-    '''把fig显示到tkinter'''
-
-    def showGraphIn(self, figure):
-        # 把绘制的图形显示到tkinter窗口上
-        self.canvas = FigureCanvasTkAgg(figure, self.root)
-        self.canvas.draw()  # 以前的版本使用show()方法，matplotlib 2.2之后不再推荐show（）用draw代替，但是用show不会报错，会显示警告
-        self.canvas.get_tk_widget().pack(side=tk.TOP)  # , fill=tk.BOTH, expand=1
-
-        # 把matplotlib绘制图形的导航工具栏显示到tkinter窗口上
-        toolbar = NavigationToolbar2Tk(self.canvas,
-                                       self.root)
-        toolbar.update()
-        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-
-    '''更新fig'''
-
-    def updateMeltGraph(self, meltData):
-        x = [i for i in range(len(meltData))]
-        self.line11.set_xdata(x)  # x轴也必须更新
-        self.line11.set_ydata(meltData)  # 更新y轴数据
-        #  更新x数据，但未更新绘图范围。当我把新数据放在绘图上时，它完全超出了范围。解决办法是增加：
-        self.fig11.relim()
-        self.fig11.autoscale_view()
-        plt.draw()
-
-
-'''
-更新窗口
-'''
-
-
-def updateWindow():
-    global win
-    global tempGraphLabel, tempData, runFlag
-    if runFlag:
-        tempGraphLabel.updateMeltGraph(cv_acc)
-    win.after(200, updateWindow)  # 1000ms更新画布
-
-
-'''
-关闭窗口触发函数，关闭S7连接，置位flag
-'''
-
-
-def closeWindow():
-    global runFlag
-    runFlag = False
-    sys.exit()
-
-
-'''
-创建控件
-'''
-
-
-def createGUI():
-    global win
-    win = tk.Tk()
-    displayWidth = win.winfo_screenwidth()  # 获取屏幕宽度
-    displayHeight = win.winfo_screenheight()
-    winWidth, winHeight = displayWidth, displayHeight - 70
-    winX, winY = -8, 0
-    win.title("title1")
-    win.geometry(
-        '%dx%d-%d+%d' %
-        (winWidth,
-         winHeight,
-         winX, winY))  # %dx%d宽度x 高度+横向偏移量(距左边)+纵向偏移量(距上边)
-
-    win.protocol("WM_DELETE_WINDOW", closeWindow)
-
-    graphFrame = tk.Frame(win)  # 创建图表控件
-    graphFrame.place(x=0, y=0)
-    global tempGraphLabel
-    tempGraphLabel = tempGraph(graphFrame)
-
-    updateWindow()  # 更新画布
-    win.mainloop()
-
-
 if __name__ == '__main__':
 
     listening_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -368,7 +248,7 @@ if __name__ == '__main__':
     # t1.start()
 
     numRound = options['num_round']
-    cv_loss = []
+    cv_loss, cv_acc = [], []
     preds = [[0 for i in range(n_nodes)] for j in range(len_indices)]
     for i in range(options['num_round']+1):
         print('---------------------------------------------------------------------------')

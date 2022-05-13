@@ -139,14 +139,18 @@ try:
 
         print('data read successfully')
         # Init model: make the data loader, divide dataset by batch_size; shuffle = False
-        test_loader = torch.utils.data.DataLoader(dataset=train_data,
-                                                  batch_size=batch_size,
+        train_loader = torch.utils.data.DataLoader(dataset=train_data,
+                                                   batch_size=batch_size,
+                                                   shuffle=False)
+        test_data = read_data('./VFLMNIST/test_K' + str(n_nodes) + '_' + str(cid) + '.pkl')
+        test_loader = torch.utils.data.DataLoader(dataset=test_data,
+                                                  batch_size=128,
                                                   shuffle=False)
         trainX, trainY = [], []
-        for idx, (x, y) in enumerate(test_loader):
+        for idx, (x, y) in enumerate(train_loader):
             trainX.append(x)
             trainY.append(y)
-        test_x, test_y = next(iter(test_loader))
+        test_x, test_y = next(iter(train_loader))
         # init model
         in_dim = len(test_x[0])
         model = Logistic(in_dim, out_dim)
@@ -211,4 +215,3 @@ try:
 except (struct.error, socket.error):
     print('Server has stopped')
     pass
-

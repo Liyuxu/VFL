@@ -137,12 +137,14 @@ try:
         file_name = './VFLMNIST/K' + str(n_nodes) + '_' + str(cid) + '.pkl'
         train_data = read_data(file_name)
 
-        print('data read successfully')
+        print(file_name, 'train data read successfully')
         # Init model: make the data loader, divide dataset by batch_size; shuffle = False
         train_loader = torch.utils.data.DataLoader(dataset=train_data,
                                                    batch_size=batch_size,
                                                    shuffle=False)
-        test_data = read_data('./VFLMNIST/test_K' + str(n_nodes) + '_' + str(cid) + '.pkl')
+        test_file_name = './VFLMNIST/test_K' + str(n_nodes) + '_' + str(cid) + '.pkl'
+        test_data = read_data(test_file_name)
+        print(test_file_name, 'test data read successfully')
         test_loader = torch.utils.data.DataLoader(dataset=test_data,
                                                   batch_size=128,
                                                   shuffle=False)

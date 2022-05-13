@@ -47,7 +47,7 @@ for i in range(0, t_row):
         test_data[i][j] = test_data[i][j] / 255
 # Make dataloader successfully
 
-num_clients = 4
+num_clients = 7
 batch = 784 // num_clients
 
 # divide dataset

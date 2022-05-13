@@ -200,12 +200,12 @@ if __name__ == '__main__':
 
     options = read_options()
 
-    n_nodes = 2
+    n_nodes = 7
     aggregation_count = 0
     # Establish connections to each client, up to n_nodes clients, setup for clients
     while len(client_sock_all) < n_nodes:
         listening_sock.listen(5)
-        print("Waiting for {} incoming connections...".format(n_nodes))
+        print("Waiting for {} incoming connections...".format(n_nodes-len(client_sock_all)))
         (client_sock, (ip, port)) = listening_sock.accept()
         print('Got connection from ', (ip, port))
         print(client_sock)

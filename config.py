@@ -29,15 +29,15 @@ def read_options():
     parser.add_argument('--clients_per_round',
                         help='number of clients trained per round;',
                         type=int,
-                        default=2)
+                        default=7)
     parser.add_argument('--batch_size',
                         help='batch size when clients train on data;',
                         type=int,
-                        default=5000)
+                        default=2000)
     parser.add_argument('--lr',
                         help='learning rate for inner solver;',
                         type=float,
-                        default=1)
+                        default=3)
     parser.add_argument('--out_dim',
                         help='output dimension',
                         type=int,
